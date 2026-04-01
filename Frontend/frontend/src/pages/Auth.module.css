@@ -1,0 +1,89 @@
+.authContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 70vh;
+  background-color: #f1f3f6; /* Flipkart light grey background */
+}
+
+.authCard {
+  background-color: #ffffff;
+  padding: 40px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+}
+
+.title {
+  text-align: center;
+  color: #212121;
+  margin-bottom: 25px;
+  font-size: 1.8rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+}
+
+.formGroup label {
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #666;
+}
+
+.formGroup input {
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 2px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.formGroup input:focus {
+  outline: none;
+  border-color: #2874f0; /* Flipkart Blue */
+}
+
+.submitBtn {
+  width: 100%;
+  background-color: #fb641b; /* Flipkart Orange/Yellow accent */
+  color: white;
+  border: none;
+  padding: 12px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border-radius: 2px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background-color 0.2s;
+}
+
+.submitBtn:hover {
+  background-color: #f35b14;
+}
+
+.switchText {
+  text-align: center;
+  margin-top: 20px;
+  color: #757575;
+}
+
+.switchLink {
+  color: #2874f0;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.switchLink:hover {
+  text-decoration: underline;
+}
+
+.errorMessage {
+  color: #ff6161;
+  text-align: center;
+  margin-bottom: 15px;
+  font-weight: 500;
+}

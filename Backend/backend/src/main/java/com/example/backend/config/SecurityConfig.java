@@ -4,7 +4,7 @@ import com.example.backend.security.JwtFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod; // NEW IMPORT
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -39,14 +39,14 @@ public class SecurityConfig {
                     // OPTIONS for pre-flight
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     
-                    // PUBLIC ROUTES
-                    .requestMatchers("/api/users/register", "/api/users/login", "/api/products/**").permitAll()
+                    // PUBLIC ROUTES (Added /api/categories/** here!)
+                    .requestMatchers("/api/users/register", "/api/users/login", "/api/products/**", "/api/categories/**").permitAll()
                     
                     // ADMIN ONLY ROUTES
                     .requestMatchers("/api/admin/**").hasRole("ADMIN")
                     
                     // SECURE ROUTES (Normal users CAN access these)
-                    .requestMatchers("/api/cart/**", "/api/orders/**", "/api/payment/**").authenticated()
+                    .requestMatchers("/api/cart/**", "/api/orders/**", "/api/payment/**", "/api/wishlist/**").authenticated()
                     
                     .anyRequest().authenticated()
                 )
@@ -60,7 +60,6 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        // FIX: Explicitly tell Spring that the "Authorization" token header is safe!
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
         configuration.setAllowCredentials(true);
         

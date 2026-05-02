@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import styles from './Orders.module.css';
+import styles from './OrderDetails.module.css';
 
 const OrderDetails = () => {
   const { id } = useParams();
@@ -17,89 +17,157 @@ const OrderDetails = () => {
     try {
       const response = await api.get(`/orders/${id}`);
       setOrder(response.data);
-      setLoading(false);
     } catch (error) {
       console.error("Error fetching order:", error);
       alert("Could not load order details.");
       navigate('/orders');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getStatusColor = (status) => {
-    if (status === 'Shipped') return '#fb641b';
-    if (status === 'Delivered') return '#388e3c';
-    if (status === 'Cancelled') return '#ff4d4f';
-    return '#2874f0'; // Processing
+  const getStatusDotClass = (status) => {
+    const lowerStatus = status?.toLowerCase() || '';
+    if (lowerStatus === 'shipped') return styles.dotShipped;
+    if (lowerStatus === 'delivered') return styles.dotDelivered;
+    if (lowerStatus === 'cancelled') return styles.dotCancelled;
+    return styles.dotProcessing; 
   };
 
-  if (loading) return <h2>Loading Order Details...</h2>;
-  if (!order) return <h2>Order Not Found</h2>;
+  // Helper to cleanly display options if they were saved as a JSON string
+  const formatOptions = (optionsStr) => {
+    if (!optionsStr) return null;
+    try {
+      const parsed = JSON.parse(optionsStr);
+      return Object.entries(parsed).map(([key, value]) => `${key}: ${value}`).join(' | ');
+    } catch (e) {
+      return optionsStr; // If it's already a plain string, just return it
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className={styles.pageContainer}>
+        <div className={styles.loadingPulse}>
+          <div className={styles.loaderLine}></div>
+          <div className={styles.loaderLine}></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!order) return <div className={styles.pageContainer}><h2>Order Not Found</h2></div>;
 
   return (
-    <div className={styles.container}>
-      <button 
-        onClick={() => navigate(-1)} 
-        style={{ background: 'none', border: 'none', color: '#2874f0', cursor: 'pointer', fontWeight: 'bold', marginBottom: '20px' }}
-      >
-        ← Back to Orders
+    <div className={styles.pageContainer}>
+      
+      {/* Sleek Back Navigation */}
+      <button onClick={() => navigate(-1)} className={styles.backButton}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Back to Orders
       </button>
 
-      <h2 className={styles.title}>Order #{order.id} Summary</h2>
-      
-      {/* Top Status Banner */}
-      <div style={{ backgroundColor: '#f9f9f9', padding: '20px', borderRadius: '4px', border: '1px solid #eee', marginBottom: '20px', display: 'flex', justifyContent: 'space-between' }}>
-        <div>
-          <p style={{ margin: '0 0 5px 0', color: '#666' }}>Order Placed</p>
-          <p style={{ margin: 0, fontWeight: 'bold' }}>{new Date(order.createdAt).toLocaleDateString()}</p>
-        </div>
-        <div>
-          <p style={{ margin: '0 0 5px 0', color: '#666' }}>Total Amount</p>
-          <p style={{ margin: 0, fontWeight: 'bold', color: '#388e3c' }}>${order.totalPrice.toFixed(2)}</p>
-        </div>
-        <div>
-          <p style={{ margin: '0 0 5px 0', color: '#666' }}>Current Status</p>
-          <p style={{ margin: 0, fontWeight: 'bold', color: getStatusColor(order.status) }}>{order.status}</p>
-        </div>
+      <div className={styles.header}>
+        <h1 className={styles.title}>Order #{String(order.id).padStart(5, '0')}</h1>
+        <p className={styles.subtitle}>
+          Placed on {new Date(order.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+        </p>
       </div>
 
-      <div style={{ marginBottom: '30px' }}>
-        <h3 style={{ borderBottom: '1px solid #eee', paddingBottom: '10px' }}>Shipping Address</h3>
-        <p style={{ lineHeight: '1.5', marginTop: '10px' }}>{order.shippingAddress || 'No address provided.'}</p>
-      </div>
+      <div className={styles.grid}>
+        {/* LEFT COLUMN: The Items */}
+        <div className={styles.itemsSection}>
+          <h3 className={styles.sectionTitle}>Items in your order</h3>
+          
+          <div className={styles.itemList}>
+            {order.orderItems && order.orderItems.map((item) => (
+              <div key={item.id} className={styles.itemCard}>
+                
+                <div className={styles.itemImageWrapper}>
+                  <img src={item.product?.image} alt={item.product?.name} className={styles.itemImage} />
+                </div>
+                
+                <div className={styles.itemDetails}>
+                  <div className={styles.itemHeader}>
+                    <h4 className={styles.itemName}>{item.product?.name}</h4>
+                    <span className={styles.itemPrice}>₹{(item.product?.price * item.quantity).toFixed(2)}</span>
+                  </div>
+                  
+                  <p className={styles.itemMeta}>Qty: {item.quantity} &times; ₹{item.product?.price.toFixed(2)}</p>
+                  
+                  {/* Customizations Section */}
+                  {(item.selectedOptions || item.customText || item.designImage) && (
+                    <div className={styles.customizationsBox}>
+                      {item.selectedOptions && (
+                        <p className={styles.customRow}>
+                          <span className={styles.customLabel}>Options:</span> {formatOptions(item.selectedOptions)}
+                        </p>
+                      )}
+                      
+                      {item.customText && (
+                        <p className={styles.customRow}>
+                          <span className={styles.customLabel}>Printed Text:</span> "{item.customText}"
+                        </p>
+                      )}
+                      
+                      {item.designImage && (
+                        <div className={styles.customRowImage}>
+                          <span className={styles.customLabel}>Uploaded Design:</span>
+                          <img src={item.designImage} alt="Custom User Design" className={styles.userDesignThumbnail} />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
 
-      <h3 style={{ borderBottom: '1px solid #eee', paddingBottom: '10px', marginBottom: '20px' }}>Items in this Order</h3>
-      
-      {/* Map through the items and show everything including custom designs! */}
-      {order.orderItems && order.orderItems.map((item) => (
-        <div key={item.id} style={{ display: 'flex', gap: '20px', marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid #f0f0f0' }}>
-          
-          {/* Main Product Image */}
-          <img src={item.product.image} alt={item.product.name} style={{ width: '120px', height: '120px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ddd' }} />
-          
-          <div style={{ flex: 1 }}>
-            <h4 style={{ margin: '0 0 10px 0', fontSize: '1.2rem' }}>{item.product.name}</h4>
-            <p style={{ margin: '0 0 5px 0' }}><strong>Price:</strong> ${item.product.price.toFixed(2)} x {item.quantity}</p>
-            
-            {/* Show dynamic user choices */}
-            {item.selectedOptions && (
-              <p style={{ margin: '0 0 5px 0', color: '#666' }}><strong>Options:</strong> {item.selectedOptions}</p>
-            )}
-            
-            {/* Show custom text if they typed it */}
-            {item.customText && (
-              <p style={{ margin: '0 0 5px 0', color: '#666' }}><strong>Custom Text:</strong> "{item.customText}"</p>
-            )}
-            
-            {/* Show the Custom Design Image if they uploaded one! */}
-            {item.designImage && (
-              <div style={{ marginTop: '15px', backgroundColor: '#f4f4f9', padding: '10px', borderRadius: '4px', display: 'inline-block' }}>
-                <p style={{ margin: '0 0 5px 0', fontSize: '0.9rem', fontWeight: 'bold' }}>Your Uploaded Design:</p>
-                <img src={item.designImage} alt="User Design" style={{ height: '80px', borderRadius: '2px', border: '1px solid #ccc' }} />
               </div>
-            )}
+            ))}
           </div>
         </div>
-      ))}
+
+        {/* RIGHT COLUMN: Order Summary & Info */}
+        <div className={styles.summarySection}>
+          
+          {/* Status Box */}
+          <div className={styles.summaryCard}>
+            <h3 className={styles.cardTitle}>Status</h3>
+            <div className={styles.statusWrapper}>
+              <div className={`${styles.statusDot} ${getStatusDotClass(order.status)}`}></div>
+              <span className={styles.statusText}>{order.status || 'Processing'}</span>
+            </div>
+          </div>
+
+          {/* Shipping Address Box */}
+          <div className={styles.summaryCard}>
+            <h3 className={styles.cardTitle}>Shipping Details</h3>
+            <p className={styles.shippingAddress}>
+              {order.shippingAddress ? order.shippingAddress : 'No address provided for this order.'}
+            </p>
+          </div>
+
+          {/* Payment Summary Box */}
+          <div className={styles.summaryCard}>
+            <h3 className={styles.cardTitle}>Payment Summary</h3>
+            <div className={styles.paymentRow}>
+              <span>Subtotal</span>
+              <span>₹{order.totalPrice.toFixed(2)}</span>
+            </div>
+            <div className={styles.paymentRow}>
+              <span>Shipping</span>
+              <span>Free</span>
+            </div>
+            <div className={styles.divider}></div>
+            <div className={`${styles.paymentRow} ${styles.totalRow}`}>
+              <span>Total</span>
+              <span>₹{order.totalPrice.toFixed(2)}</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
     </div>
   );
 };

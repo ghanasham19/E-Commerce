@@ -1,83 +1,467 @@
-.checkoutWrapper {
+/* --- Variables & Editorial Palette --- */
+.pageContainer {
+  --primary-color: #0F0F0F; 
+  --text-main: #1A1A1A; 
+  --text-muted: #8E8E93; 
+  --border-subtle: #EAEAEA; 
+  --bg-page: #F9F9FB;
+  --bg-card: #FFFFFF;
+  --accent-danger: #D93025;
+  --accent-success: #2B7A4B;
+  
+  --shadow-float: 0 12px 32px rgba(0, 0, 0, 0.04);
+  --shadow-hover: 0 16px 48px rgba(0, 0, 0, 0.06);
+
+  max-width: 1000px; 
+  margin: 0 auto;
+  padding: 60px 24px;
+  font-family: 'Inter', -apple-system, sans-serif;
+  color: var(--text-main);
+  min-height: 100vh;
+}
+
+/* --- Header --- */
+.headerWrapper {
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.title {
+  font-size: 2.75rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin: 0 0 8px 0;
+  letter-spacing: -0.03em;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* --- Error Alert --- */
+.errorAlert {
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 40px 20px;
-  min-height: 80vh;
+  align-items: center;
+  gap: 12px;
+  background-color: #FFF5F5;
+  border: 1px solid #FFE3E3;
+  color: var(--accent-danger);
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin-bottom: 32px;
+  font-size: 0.95rem;
+  font-weight: 500;
 }
 
-.checkoutCard {
-  background-color: #ffffff;
-  width: 100%;
-  max-width: 600px;
-  padding: 40px;
-  border-radius: 2px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+/* --- Layout Grid --- */
+.grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 40px;
+  align-items: start;
 }
 
-.header {
-  background-color: #2874f0;
-  color: white;
-  padding: 15px 20px;
-  margin: -40px -40px 30px -40px; /* Pulls it to the edges of the card */
-  border-radius: 2px 2px 0 0;
-  font-size: 1.2rem;
-  font-weight: bold;
+/* --- Cards --- */
+.card {
+  background-color: var(--bg-card);
+  padding: 32px;
+  border-radius: 24px;
+  box-shadow: var(--shadow-float);
+  border: 1px solid rgba(255,255,255,0.8);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  color: var(--primary-color);
+}
+
+.cardHeader h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+/* --- Form Elements --- */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.row {
+  display: flex;
+  gap: 20px;
 }
 
 .formGroup {
-  margin-bottom: 20px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex: 1;
 }
 
-.formGroup label {
-  font-weight: 500;
-  color: #878787;
-  font-size: 0.95rem;
+.label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.formGroup input {
-  padding: 14px;
-  border: 1px solid #e0e0e0;
-  border-radius: 2px;
+.input {
+  width: 100%;
+  padding: 16px;
   font-size: 1rem;
-  transition: border-color 0.2s;
-}
-
-.formGroup input:focus {
+  color: var(--primary-color);
+  background-color: var(--bg-page);
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 12px;
   outline: none;
-  border-color: #2874f0;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  box-sizing: border-box;
 }
 
+.input:focus {
+  border-color: var(--primary-color);
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(15, 15, 15, 0.08); 
+}
+
+.input::placeholder {
+  color: #C7C7CC;
+}
+
+/* --- Summary Section --- */
+.summarySection {
+  position: sticky;
+  top: 40px;
+}
+
+.summaryBody {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1rem;
+}
+
+.summaryLabel {
+  color: var(--text-muted);
+}
+
+.summaryValue {
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+.summaryHighlight {
+  color: var(--accent-success);
+  font-weight: 600;
+}
+
+.divider {
+  height: 1px;
+  background-color: var(--border-subtle);
+  margin: 8px 0;
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 24px;
+  letter-spacing: -0.02em;
+}
+
+/* --- Submit Button --- */
 .submitBtn {
   width: 100%;
-  background-color: #fb641b;
+  background-color: var(--primary-color);
   color: #ffffff;
   border: none;
-  padding: 16px;
+  border-radius: 12px;
+  padding: 18px;
   font-size: 1.1rem;
-  font-weight: bold;
-  border-radius: 2px;
+  font-weight: 600;
   cursor: pointer;
-  margin-top: 10px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-  transition: background-color 0.2s;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.submitBtn:hover {
-  background-color: #f35b14;
+.submitBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  background-color: #000000;
 }
 
-.secureText {
-  text-align: center;
-  color: #388e3c;
-  font-size: 0.9rem;
-  margin-top: 15px;
-  font-weight: 500;
+.submitBtn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.submitBtn:disabled {
+  background-color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.8;
+  box-shadow: none;
+}
+
+.btnContent {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 10px;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+
+/* --- Trust Footer --- */
+.secureFooter {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.secureFooter strong {
+  color: var(--primary-color);
+}
+
+/* --- Loading Animation --- */
+.loadingPulse {
+  display: flex;
+  justify-content: center;
+  margin-top: 100px;
+}
+
+.loaderLine {
+  width: 100%;
+  max-width: 400px;
+  height: 200px;
+  background: linear-gradient(90deg, #F0F0F5 25%, #FAFAFC 50%, #F0F0F5 75%);
+  background-size: 200% 100%;
+  animation: pulse 1.5s infinite linear;
+  border-radius: 24px;
+}
+
+@keyframes pulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* --- Mobile Responsiveness --- */
+@media (max-width: 800px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .row {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .summarySection {
+    position: static;
+  }
+}
+/* --- Verification Locking Overlay --- */
+.verificationOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; /* Ensures it sits on top of absolutely everything */
+}
+
+.verificationModal {
+  background-color: #FFFFFF;
+  padding: 40px 60px;
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: popIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.spinnerLarge {
+  width: 48px;
+  height: 48px;
+  color: var(--primary-color);
+  animation: spin 1.2s linear infinite;
+  margin-bottom: 24px;
+}
+
+.verificationModal h2 {
+  margin: 0 0 8px 0;
+  color: var(--primary-color);
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.verificationModal p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.95); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+/* --- Upgraded Verification Modal & Animations --- */
+.verificationOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.verificationModal {
+  background-color: #FFFFFF;
+  padding: 48px 64px;
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  text-align: center;
+  min-width: 380px;
+  animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.modalContentFade {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: fadeIn 0.4s ease;
+}
+
+.verificationModal h2 {
+  margin: 0 0 8px 0;
+  color: var(--primary-color);
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.verificationModal p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+
+/* 1. The Sleek Processing Spinner */
+.sleekSpinner {
+  width: 56px;
+  height: 56px;
+  border: 3px solid rgba(15, 15, 15, 0.08);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: smoothSpin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  margin-bottom: 24px;
+}
+
+/* 2. The Animated Success Checkmark */
+.successAnimationBox {
+  width: 72px;
+  height: 72px;
+  margin-bottom: 24px;
+}
+
+.checkmarkSvg {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: block;
+  stroke-width: 2.5;
+  stroke: var(--accent-success);
+  stroke-miterlimit: 10;
+  box-shadow: inset 0px 0px 0px var(--accent-success);
+  animation: fillGreen .4s ease-in-out .4s forwards, popScale .3s ease-in-out .9s both;
+}
+
+.checkmarkCircle {
+  stroke-dasharray: 166;
+  stroke-dashoffset: 166;
+  stroke-width: 2.5;
+  stroke-miterlimit: 10;
+  stroke: var(--accent-success);
+  fill: none;
+  animation: drawStroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.checkmarkCheck {
+  transform-origin: 50% 50%;
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: drawStroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.6s forwards;
+}
+
+/* Tiny spinner for the "Pay Securely" button */
+.miniSpinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: smoothSpin 0.8s linear infinite;
+}
+
+/* Keyframes */
+@keyframes popIn {
+  0% { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes smoothSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes drawStroke {
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes popScale {
+  0%, 100% { transform: none; }
+  50% { transform: scale3d(1.1, 1.1, 1); }
+}
+
+@keyframes fillGreen {
+  100% { box-shadow: inset 0px 0px 0px 40px rgba(43, 122, 75, 0.1); }
 }

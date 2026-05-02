@@ -5,17 +5,14 @@ import styles from './AdminDashboard.module.css';
 const AdminDashboard = () => {
   const [success, setSuccess] = useState('');
   const [products, setProducts] = useState([]); 
-  const [categories, setCategories] = useState([]); // NEW: Holds all categories
+  const [categories, setCategories] = useState([]); 
   const [editingId, setEditingId] = useState(null); 
   
-  // NEW: Added categoryId to the product state
   const [productData, setProductData] = useState({ name: '', description: '', price: '', image: '', categoryId: '' });
   const [optionsBuilder, setOptionsBuilder] = useState([{ name: 'Size', values: 'S, M, L' }]);
   
-  // NEW: State for creating a brand new category
   const [newCategoryName, setNewCategoryName] = useState('');
 
-  // Fetch products AND categories when page loads
   useEffect(() => {
     fetchProducts();
     fetchCategories();
@@ -30,7 +27,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // NEW: Fetch categories from backend
   const fetchCategories = async () => {
     try {
       const response = await api.get('/categories');
@@ -61,14 +57,13 @@ const AdminDashboard = () => {
 
   const handleRemoveOptionRow = (index) => setOptionsBuilder(optionsBuilder.filter((_, i) => i !== index));
 
-  // --- NEW: CREATE CATEGORY LOGIC ---
   const handleCreateCategory = async (e) => {
     e.preventDefault();
     if (!newCategoryName.trim()) return;
     try {
       await api.post('/categories/create', { name: newCategoryName });
       setNewCategoryName('');
-      fetchCategories(); // Refresh the dropdown list!
+      fetchCategories(); 
       setSuccess(`Category "${newCategoryName}" created successfully!`);
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
@@ -77,24 +72,21 @@ const AdminDashboard = () => {
     }
   };
 
-  // --- NEW: TOGGLE TRENDING STATUS ---
   const handleToggleTrending = async (id) => {
     try {
       await api.put(`/products/admin/${id}/toggle-trending`);
-      fetchProducts(); // Refresh the table to show the new status
+      fetchProducts(); 
     } catch (error) {
       console.error("Error toggling trending status:", error);
       alert("Failed to update trending status.");
     }
   };
 
-  // --- SAVE OR UPDATE LOGIC ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formattedOptions = optionsBuilder.filter(opt => opt.name.trim() !== '')
       .map(opt => ({ name: opt.name, values: opt.values.split(',').map(val => val.trim()).filter(val => val !== '') }));
 
-    // NEW: Attach the Category Object so Spring Boot Hibernate understands it
     const finalProductData = { 
       ...productData, 
       customizationOptions: JSON.stringify(formattedOptions),
@@ -110,19 +102,18 @@ const AdminDashboard = () => {
         setSuccess(`Successfully added ${productData.name}!`);
       }
       
-      // Reset form and refresh table
       setProductData({ name: '', description: '', price: '', image: '', categoryId: '' });
       setOptionsBuilder([{ name: '', values: '' }]);
       setEditingId(null);
       fetchProducts(); 
       setTimeout(() => setSuccess(''), 3000);
+      window.scrollTo({ top: 0, behavior: 'smooth' }); 
     } catch (error) {
       console.error("Error saving product:", error);
       alert("Failed to save product.");
     }
   };
 
-  // --- EDIT PRODUCT BUTTON ---
   const handleEdit = (prod) => {
     setEditingId(prod.id);
     setProductData({ 
@@ -130,7 +121,7 @@ const AdminDashboard = () => {
       description: prod.description, 
       price: prod.price, 
       image: '',
-      categoryId: prod.category ? prod.category.id : '' // NEW: Pre-select their existing category
+      categoryId: prod.category ? prod.category.id : '' 
     }); 
     
     if (prod.customizationOptions) {
@@ -140,168 +131,295 @@ const AdminDashboard = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' }); 
   };
 
-  // --- DELETE PRODUCT BUTTON ---
   const handleDelete = async (id, name) => {
-    if (!window.confirm(`Are you sure you want to delete "${name}"?`)) return;
+    if (!window.confirm(`Are you absolutely sure you want to delete "${name}"?`)) return;
     try {
      await api.delete(`/admin/products/${id}`);
       fetchProducts(); 
-      alert("Product deleted!");
+      setSuccess(`Product deleted!`);
+      setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
       alert("Cannot delete this product. It is likely already attached to a customer's order history!");
     }
   };
 
   return (
-    <div className={styles.dashboardContainer}>
+    <div className={styles.adminContainer}>
+      
       <div className={styles.header}>
-        <h1>Admin Control Panel</h1>
-        <p style={{ fontSize: '1.2rem', color: '#ffe500', fontWeight: 'bold' }}>
-          Total Active Products in Store: {products.length}
-        </p>
+        <div>
+          <h1 className={styles.title}>Inventory Console</h1>
+          <p className={styles.subtitle}>Manage your products, categories, and storefront visibility.</p>
+        </div>
+        <div className={styles.metricsGroup}>
+          <div className={styles.metricBadge}>
+            <span className={styles.metricValue}>{products.length}</span>
+            <span className={styles.metricLabel}>Active Products</span>
+          </div>
+          <div className={styles.metricBadge}>
+            <span className={styles.metricValue}>{categories.length}</span>
+            <span className={styles.metricLabel}>Categories</span>
+          </div>
+        </div>
       </div>
 
-      {success && <div className={styles.successMsg} style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#d4edda', color: '#155724', borderRadius: '4px', textAlign: 'center', fontWeight: 'bold' }}>{success}</div>}
+      {success && (
+        <div className={styles.successAlert}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          {success}
+        </div>
+      )}
 
-      {/* NEW: CATEGORY CREATION SECTION */}
-      <div className={styles.section} style={{ marginBottom: '30px', backgroundColor: '#f0f4f8', padding: '20px', borderRadius: '8px' }}>
-        <h2 className={styles.sectionTitle} style={{ margin: '0 0 15px 0', fontSize: '1.2rem' }}>📂 Create New Category</h2>
-        <form onSubmit={handleCreateCategory} style={{ display: 'flex', gap: '10px' }}>
-          <input 
-            type="text" 
-            placeholder="e.g., T-Shirts, Mugs, Hoodies" 
-            value={newCategoryName} 
-            onChange={(e) => setNewCategoryName(e.target.value)} 
-            style={{ flex: 1, padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-            required 
-          />
-          <button type="submit" style={{ backgroundColor: '#2874f0', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
-            + Add Category
-          </button>
-        </form>
-      </div>
+      <div className={styles.topGrid}>
+        
+        {/* Category Creation Card */}
+        <div className={styles.dashboardCard}>
+          <div className={styles.cardHeader}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <h2>New Category</h2>
+          </div>
+          <form onSubmit={handleCreateCategory} className={styles.inlineForm}>
+            <input 
+              type="text" 
+              placeholder="e.g., Hoodies, Mugs" 
+              value={newCategoryName} 
+              onChange={(e) => setNewCategoryName(e.target.value)} 
+              className={styles.input}
+              required 
+            />
+            <button type="submit" className={styles.secondaryBtn}>Add</button>
+          </form>
+        </div>
 
-      <div className={styles.section} style={{ marginBottom: '30px' }}>
-        <h2 className={styles.sectionTitle}>{editingId ? 'Edit Product' : 'Add New Product'}</h2>
-
-        <form className={styles.formGrid} onSubmit={handleSubmit}>
-          <div className={styles.formGroup}>
-            <label>Product Name</label>
-            <input type="text" name="name" value={productData.name} onChange={handleChange} required />
+        {/* UPGRADED: Product Creation/Edit Card */}
+        <div className={`${styles.dashboardCard} ${styles.spanFull}`}>
+          <div className={styles.cardHeaderLarge}>
+            <div>
+              <h2>{editingId ? 'Edit Product Configuration' : 'Create New Product'}</h2>
+              <p>Add all the details, media, and variants for your product here.</p>
+            </div>
+            {editingId && (
+              <span className={styles.editingBadge}>Editing Mode</span>
+            )}
           </div>
 
-          <div className={styles.formGroup}>
-            <label>Price (₹)</label>
-            <input type="number" step="0.01" name="price" value={productData.price} onChange={handleChange} required />
-          </div>
-
-          {/* NEW: CATEGORY DROPDOWN */}
-          <div className={`${styles.formGroup} ${styles.fullWidth}`}>
-            <label>Product Category</label>
-            <select 
-              name="categoryId" 
-              value={productData.categoryId} 
-              onChange={handleChange} 
-              required
-              style={{ padding: '10px', width: '100%', borderRadius: '4px', border: '1px solid #ccc' }}
-            >
-              <option value="">-- Select a Category --</option>
-              {categories.map(cat => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className={`${styles.formGroup} ${styles.fullWidth}`}>
-            <label>Description</label>
-            <textarea name="description" value={productData.description} onChange={handleChange} rows="2" required />
-          </div>
-
-          <div className={`${styles.formGroup} ${styles.fullWidth}`} style={{ backgroundColor: '#f9f9f9', padding: '15px', borderRadius: '4px', border: '1px dashed #ccc' }}>
-            <label>{editingId ? 'Upload New Image (Leave blank to keep old image)' : 'Upload Product Image'}</label>
-            <input type="file" accept="image/*" onChange={handleImageUpload} required={!editingId && !productData.image} />
-            {productData.image && <img src={productData.image} alt="Preview" style={{ height: '80px', marginTop: '10px' }} />}
-          </div>
-
-          <div className={`${styles.formGroup} ${styles.fullWidth}`} style={{ borderTop: '2px solid #eee', paddingTop: '20px' }}>
-            <label style={{ fontSize: '1.2rem', color: '#2874f0' }}>Dropdown Options</label>
-            {optionsBuilder.map((option, index) => (
-              <div key={index} style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                <input type="text" placeholder="Name (e.g., Size)" value={option.name} onChange={(e) => handleOptionChange(index, 'name', e.target.value)} style={{ flex: 1 }} />
-                <input type="text" placeholder="Choices (e.g., S, M, L)" value={option.values} onChange={(e) => handleOptionChange(index, 'values', e.target.value)} style={{ flex: 2 }} />
-                <button type="button" onClick={() => handleRemoveOptionRow(index)} style={{ backgroundColor: '#ff6161', color: 'white', border: 'none', padding: '0 15px', borderRadius: '4px', cursor: 'pointer' }}>X</button>
+          <form onSubmit={handleSubmit} className={styles.modernForm}>
+            
+            {/* Block 1: Basic Details */}
+            <div className={styles.formBlock}>
+              <div className={styles.blockHeader}>
+                <div className={styles.blockIcon}>1</div>
+                <h3>Basic Details</h3>
               </div>
-            ))}
-            <button type="button" onClick={handleAddOptionRow} style={{ backgroundColor: '#e0e0e0', padding: '10px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>+ Add Option</button>
-          </div>
+              <div className={styles.formGrid}>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Product Name</label>
+                  <input type="text" name="name" className={styles.input} placeholder="e.g., Premium Cotton Tee" value={productData.name} onChange={handleChange} required />
+                </div>
 
-          <button type="submit" className={styles.submitBtn} style={{ backgroundColor: editingId ? '#388e3c' : '#2874f0' }}>
-            {editingId ? 'Update Product' : 'Save Product'}
-          </button>
-          
-          {editingId && (
-            <button type="button" onClick={() => { setEditingId(null); setProductData({ name: '', description: '', price: '', image: '', categoryId: '' }); }} style={{ backgroundColor: '#9e9e9e', color: 'white', padding: '15px', border: 'none', marginTop: '10px', cursor: 'pointer', borderRadius: '2px', fontWeight: 'bold' }}>
-              Cancel Edit
-            </button>
-          )}
-        </form>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Price (₹)</label>
+                  <input type="number" step="0.01" name="price" className={styles.input} placeholder="0.00" value={productData.price} onChange={handleChange} required />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Category</label>
+                  <div className={styles.selectWrapper}>
+                    <select name="categoryId" className={styles.selectInput} value={productData.categoryId} onChange={handleChange} required>
+                      <option value="">-- Select Category --</option>
+                      {categories.map(cat => (
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      ))}
+                    </select>
+                    <svg className={styles.selectArrow} width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="1 1 5 5 9 1"></polyline>
+                    </svg>
+                  </div>
+                </div>
+
+                <div className={`${styles.formGroup} ${styles.fullWidth}`}>
+                  <label className={styles.label}>Product Description</label>
+                  <textarea name="description" className={styles.textarea} placeholder="Describe the product features, material, and fit..." value={productData.description} onChange={handleChange} rows="3" required />
+                </div>
+              </div>
+            </div>
+
+            {/* Block 2: Media Upload */}
+            <div className={styles.formBlock}>
+              <div className={styles.blockHeader}>
+                <div className={styles.blockIcon}>2</div>
+                <h3>Product Media</h3>
+              </div>
+              <div className={styles.formGroup}>
+                <div className={styles.uploadArea}>
+                  <input type="file" accept="image/*" onChange={handleImageUpload} className={styles.fileInput} required={!editingId && !productData.image} id="prod-img" />
+                  <label htmlFor="prod-img" className={`${styles.uploadContent} ${productData.image ? styles.hasImage : ''}`}>
+                    {productData.image ? (
+                      <div className={styles.previewWrapper}>
+                        <img src={productData.image} alt="Preview" className={styles.uploadPreview} />
+                        <div className={styles.uploadTextGroup}>
+                          <span className={styles.uploadSuccessText}>Image successfully attached!</span>
+                          <span className={styles.uploadSubText}>Click or drag to replace with a new image.</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className={styles.uploadPlaceholder}>
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                          <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                        <span className={styles.uploadMainText}>Click to upload a high-resolution image</span>
+                        <span className={styles.uploadSubText}>PNG, JPG, or WEBP (Max 5MB)</span>
+                      </div>
+                    )}
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Block 3: Options Builder */}
+            <div className={styles.formBlock}>
+              <div className={styles.blockHeader}>
+                <div className={styles.blockIcon}>3</div>
+                <h3>Variants & Options</h3>
+              </div>
+              <p className={styles.blockDescription}>Allow customers to choose sizes, colors, or materials.</p>
+              
+              <div className={styles.optionsList}>
+                {optionsBuilder.map((option, index) => (
+                  <div key={index} className={styles.optionRowCard}>
+                    <div className={styles.optionInputs}>
+                      <div className={styles.formGroup}>
+                        <label className={styles.label}>Option Name</label>
+                        <input type="text" className={styles.input} placeholder="e.g., Size" value={option.name} onChange={(e) => handleOptionChange(index, 'name', e.target.value)} />
+                      </div>
+                      <div className={styles.formGroup}>
+                        <label className={styles.label}>Values (Comma separated)</label>
+                        <input type="text" className={styles.input} placeholder="e.g., S, M, L, XL" value={option.values} onChange={(e) => handleOptionChange(index, 'values', e.target.value)} />
+                      </div>
+                    </div>
+                    <button type="button" onClick={() => handleRemoveOptionRow(index)} className={styles.removeOptionBtn} title="Remove Variant">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+                <button type="button" onClick={handleAddOptionRow} className={styles.addOptionBtn}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  Add Another Variant
+                </button>
+              </div>
+            </div>
+
+            {/* Form Footer Action Bar */}
+            <div className={styles.formFooter}>
+              {editingId && (
+                <button type="button" onClick={() => { setEditingId(null); setProductData({ name: '', description: '', price: '', image: '', categoryId: '' }); }} className={styles.cancelBtn}>
+                  Cancel Editing
+                </button>
+              )}
+              <button type="submit" className={`${styles.primaryBtn} ${editingId ? styles.updateBtn : ''} ${styles.massiveSubmitBtn}`}>
+                {editingId ? 'Save Changes to Product' : 'Publish Product to Store'}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
 
-      <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Manage Inventory</h2>
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px' }}>
-          <thead>
-            <tr style={{ backgroundColor: '#f4f4f9', textAlign: 'left', borderBottom: '2px solid #ddd' }}>
-              <th style={{ padding: '12px' }}>Image</th>
-              <th style={{ padding: '12px' }}>Product</th>
-              <th style={{ padding: '12px' }}>Category</th>
-              <th style={{ padding: '12px', textAlign: 'center' }}>Homepage Status</th>
-              <th style={{ padding: '12px', textAlign: 'right' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map(prod => (
-              <tr key={prod.id} style={{ borderBottom: '1px solid #eee' }}>
-                <td style={{ padding: '12px' }}><img src={prod.image} alt="img" style={{ height: '50px', width: '50px', objectFit: 'cover', borderRadius: '4px' }}/></td>
-                
-                <td style={{ padding: '12px', fontWeight: '500' }}>
-                  {prod.name}
-                  <div style={{ color: '#388e3c', fontSize: '0.9rem' }}>₹{prod.price.toFixed(2)}</div>
-                </td>
-                
-                {/* Display the Category Name */}
-                <td style={{ padding: '12px', color: '#666' }}>
-                  {prod.category ? prod.category.name : <span style={{ color: 'red' }}>None</span>}
-                </td>
-                
-                {/* NEW: TRENDING TOGGLE BUTTON */}
-                <td style={{ padding: '12px', textAlign: 'center' }}>
-                  <button 
-                    onClick={() => handleToggleTrending(prod.id)} 
-                    style={{ 
-                      backgroundColor: prod.trending ? '#ffc107' : '#e0e0e0', 
-                      color: prod.trending ? '#000' : '#666', 
-                      border: 'none', 
-                      padding: '6px 12px', 
-                      borderRadius: '20px', 
-                      cursor: 'pointer',
-                      fontWeight: 'bold',
-                      fontSize: '0.8rem',
-                      transition: '0.3s'
-                    }}
-                  >
-                    {prod.trending ? '⭐ Trending' : 'Set Trending'}
-                  </button>
-                </td>
+      {/* --- INVENTORY TABLE --- */}
+      <div className={styles.dashboardCard} style={{ marginTop: '32px' }}>
+        <div className={styles.cardHeader} style={{ marginBottom: '24px' }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6"></line>
+            <line x1="8" y1="12" x2="21" y2="12"></line>
+            <line x1="8" y1="18" x2="21" y2="18"></line>
+            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+          </svg>
+          <h2>Manage Inventory</h2>
+        </div>
 
-                <td style={{ padding: '12px', textAlign: 'right', gap: '10px' }}>
-                  <button onClick={() => handleEdit(prod)} style={{ backgroundColor: '#2874f0', color: 'white', border: 'none', padding: '6px 15px', borderRadius: '4px', cursor: 'pointer', marginRight: '5px' }}>Edit</button>
-                  <button onClick={() => handleDelete(prod.id, prod.name)} style={{ backgroundColor: '#ff4d4f', color: 'white', border: 'none', padding: '6px 15px', borderRadius: '4px', cursor: 'pointer' }}>Delete</button>
-                </td>
+        <div className={styles.tableWrapper}>
+          <table className={styles.dataTable}>
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th className={styles.textCenter}>Visibility</th>
+                <th className={styles.textRight}>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {products.map(prod => (
+                <tr key={prod.id} className={styles.dataRow}>
+                  <td>
+                    <div className={styles.tableImageWrapper}>
+                      <img src={prod.image} alt="Product" className={styles.tableImage} />
+                    </div>
+                  </td>
+                  
+                  <td>
+                    <div className={styles.productCell}>
+                      <span className={styles.fontBold}>{prod.name}</span>
+                      <span className={styles.priceCell}>₹{prod.price.toFixed(2)}</span>
+                    </div>
+                  </td>
+                  
+                  <td className={styles.textMuted}>
+                    {prod.category ? prod.category.name : <span className={styles.errorText}>Uncategorized</span>}
+                  </td>
+                  
+                  <td className={styles.textCenter}>
+                    <button 
+                      onClick={() => handleToggleTrending(prod.id)} 
+                      className={`${styles.trendingToggle} ${prod.trending ? styles.trendingActive : ''}`}
+                    >
+                      {prod.trending ? (
+                        <><span className={styles.starIcon}>★</span> Trending</>
+                      ) : (
+                        'Set Trending'
+                      )}
+                    </button>
+                  </td>
+
+                  <td>
+                    <div className={styles.actionGroup}>
+                      <button onClick={() => handleEdit(prod)} className={styles.iconBtn} title="Edit Product">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                      </button>
+                      <button onClick={() => handleDelete(prod.id, prod.name)} className={`${styles.iconBtn} ${styles.deleteBtn}`} title="Delete Product">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

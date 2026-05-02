@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import styles from './Checkout.module.css';
 
-// 1. Helper function to load the Razorpay script into the browser
 const loadScript = (src) => {
   return new Promise((resolve) => {
     const script = document.createElement('script');
@@ -25,27 +24,28 @@ const Checkout = () => {
     zip: ''
   });
 
-  const [cartTotal, setCartTotal] = useState(0); // Holds the real price
+  const [cartTotal, setCartTotal] = useState(0); 
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isPageLoading, setIsPageLoading] = useState(true);
+  
+  // NEW: Advanced status tracking for the overlay animation
+  // States: 'idle' | 'processing' | 'success'
+  const [verificationStatus, setVerificationStatus] = useState('idle'); 
 
-  // 2. Fetch the cart items and calculate the total when the page loads
-// 2. Fetch the cart items and calculate the total when the page loads
   useEffect(() => {
     const fetchCartTotal = async () => {
-      if (!user) return;
+      if (!user) {
+        navigate('/login');
+        return;
+      }
       try {
         const response = await api.get(`/cart/${user.id}`); 
-        console.log("Raw Cart Data from Backend:", response.data); // Let's peek at the data!
-        
         const cartData = response.data;
         
-        // FIX: If cartData is an array, use it. If it's an object, look for the list inside 'items' or 'cartItems'
         const itemsArray = Array.isArray(cartData) ? cartData : (cartData.items || cartData.cartItems || []);
         
         let calculatedTotal = 0;
-        
-        // Now we can safely loop over the array
         itemsArray.forEach(item => {
           const itemPrice = item.product ? item.product.price : item.price;
           calculatedTotal += (itemPrice * item.quantity);
@@ -54,55 +54,63 @@ const Checkout = () => {
         setCartTotal(calculatedTotal);
       } catch (err) {
         console.error("Failed to load cart total:", err);
+      } finally {
+        setIsPageLoading(false);
       }
     };
 
     fetchCartTotal();
-  }, [user]);
+  }, [user, navigate]);
 
-  // 3. The main Razorpay integration function
   const displayRazorpayPopup = async () => {
     const res = await loadScript('https://checkout.razorpay.com/v1/checkout.js');
     if (!res) {
-      setError("Razorpay SDK failed to load. Are you online?");
+      setError("Razorpay SDK failed to load. Please check your internet connection.");
       setIsLoading(false);
       return;
     }
 
     try {
-      // Ask Spring Boot for the secure payment ticket with the REAL total!
       const response = await api.post('/payment/create-order', { amount: Math.round(cartTotal) });
       const razorpayData = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
 
-      // Configure the Popup Window
       const options = {
         key: "rzp_test_SUE8RuhY4Z82bI", 
-        amount: razorpayData.amount, // Amount is in paise
+        amount: razorpayData.amount, 
         currency: "INR",
-        name: "Custom Print Shop", 
+        name: "TradeVibe", 
         description: "Secure Order Payment",
         order_id: razorpayData.id, 
         
-        // THIS RUNS ONLY IF PAYMENT IS SUCCESSFUL ON THE POPUP
         handler: async function (paymentResponse) {
-          console.log("PAYMENT SUCCESS, VERIFYING...", paymentResponse);
+          // 1. Immediately lock the screen and show the sleek spinner
+          setVerificationStatus('processing'); 
           
           try {
-            // STEP 1: Verify the cryptographic signature
             await api.post('/payment/verify', paymentResponse);
             
-            // STEP 2: Save the actual order to MySQL & clear the cart
             const fullAddress = `${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.zip}`;
             await api.post(`/orders/create/${user.id}`, { 
               shippingAddress: fullAddress 
             });
             
-            alert("Payment Verified & Order Placed Successfully!");
-            navigate('/orders'); 
+            // 2. Switch to the beautiful Success Animation
+            setVerificationStatus('success');
+            
+            // 3. Pause for 2 seconds so the user can see it, then redirect!
+            setTimeout(() => {
+              navigate('/orders'); 
+            }, 2000);
             
           } catch (verificationError) {
             console.error("Verification or order saving failed:", verificationError);
-            alert("Payment was successful, but there was an error saving your order. Please contact support.");
+            setError("Payment successful, but we encountered an error saving your order. Please contact support.");
+            setVerificationStatus('idle'); // Unlock the screen so they can read the error
+          }
+        },
+        modal: {
+          ondismiss: function() {
+            setIsLoading(false);
           }
         },
         prefill: {
@@ -111,7 +119,7 @@ const Checkout = () => {
           contact: user.phone || "9999999999" 
         },
         theme: {
-          color: "#2874f0" 
+          color: "#0F0F0F" 
         }
       };
 
@@ -120,8 +128,7 @@ const Checkout = () => {
 
     } catch (err) {
       console.error("Payment Ticket Error:", err);
-      setError("Failed to create secure payment ticket. Please check the backend connection.");
-    } finally {
+      setError("Failed to create secure payment ticket. Please try again.");
       setIsLoading(false);
     }
   };
@@ -130,81 +137,179 @@ const Checkout = () => {
     e.preventDefault();
     if (!user) return navigate('/login');
     
-    // Prevent checkout if the cart is empty or failed to load
     if (cartTotal <= 0) {
-      setError("Your cart is empty or the total could not be calculated.");
+      setError("Your cart is empty. Please add items before checking out.");
       return;
     }
 
     setIsLoading(true);
     setError('');
-    
-    // Trigger the popup flow
     displayRazorpayPopup();
   };
 
-  return (
-    <div className={styles.checkoutWrapper}>
-      <div className={styles.checkoutCard}>
-        <div className={styles.header}>
-          1. Delivery Address & Payment
+  if (isPageLoading) {
+    return (
+      <div className={styles.pageContainer}>
+        <div className={styles.loadingPulse}>
+          <div className={styles.loaderLine}></div>
         </div>
-        
-        <form onSubmit={handleCheckout}>
-          <div className={styles.formGroup}>
-            <label>Full Shipping Address</label>
-            <input 
-              type="text" 
-              placeholder="e.g., 123 Main Street, Apt 4B" 
-              required 
-              onChange={(e) => setShippingInfo({...shippingInfo, address: e.target.value})}
-            />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {/* UPGRADED: Dynamic Full Screen Verification Overlay */}
+      {verificationStatus !== 'idle' && (
+        <div className={styles.verificationOverlay}>
+          <div className={styles.verificationModal}>
+            
+            {verificationStatus === 'processing' ? (
+              <div className={styles.modalContentFade}>
+                <div className={styles.sleekSpinner}></div>
+                <h2>Securing your payment...</h2>
+                <p>Please don't refresh or close this window.</p>
+              </div>
+            ) : (
+              <div className={styles.modalContentFade}>
+                <div className={styles.successAnimationBox}>
+                  <svg className={styles.checkmarkSvg} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                    <circle className={styles.checkmarkCircle} cx="26" cy="26" r="25" fill="none" />
+                    <path className={styles.checkmarkCheck} fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+                  </svg>
+                </div>
+                <h2 style={{ color: '#2B7A4B' }}>Payment Successful</h2>
+                <p>Preparing your order dashboard...</p>
+              </div>
+            )}
+
           </div>
-          
-          <div style={{ display: 'flex', gap: '20px' }}>
-            <div className={styles.formGroup} style={{ flex: 1 }}>
-              <label>City</label>
-              <input 
-                type="text" 
-                placeholder="City" 
-                required 
-                onChange={(e) => setShippingInfo({...shippingInfo, city: e.target.value})}
-              />
-            </div>
-            <div className={styles.formGroup} style={{ flex: 1 }}>
-              <label>ZIP / Postal Code</label>
-              <input 
-                type="text" 
-                placeholder="Postal Code" 
-                required 
-                onChange={(e) => setShippingInfo({...shippingInfo, zip: e.target.value})}
-              />
-            </div>
-          </div>
-          
-          {/* Button dynamically shows the real total price! */}
-          <button 
-            type="submit" 
-            className={styles.submitBtn} 
-            disabled={isLoading || cartTotal <= 0}
-          >
-            {isLoading 
-              ? "Opening Secure Gateway..." 
-              : `PROCEED TO SECURE PAYMENT (₹${cartTotal})`}
-          </button>
-        </form>
+        </div>
+      )}
+
+      {/* --- REST OF THE PAGE REMAINS EXACTLY THE SAME --- */}
+      <div className={styles.pageContainer}>
+        <div className={styles.headerWrapper}>
+          <h1 className={styles.title}>Checkout</h1>
+          <p className={styles.subtitle}>Complete your delivery and payment details.</p>
+        </div>
 
         {error && (
-          <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#ffebee', color: '#c62828', borderRadius: '4px', fontWeight: 'bold', textAlign: 'center' }}>
-            {error}
+          <div className={styles.errorAlert}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>{error}</span>
           </div>
         )}
 
-        <p className={styles.secureText} style={{ marginTop: '20px', textAlign: 'center' }}>
-          🔒 Safe and Secure Payments. Powered by Razorpay.
-        </p>
+        <div className={styles.grid}>
+          
+          <div className={styles.formSection}>
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                  <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                <h2>Shipping Address</h2>
+              </div>
+              
+              <form id="checkout-form" onSubmit={handleCheckout} className={styles.form}>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Street Address</label>
+                  <input 
+                    type="text" 
+                    className={styles.input}
+                    placeholder="123 Main Street, Apt 4B" 
+                    required 
+                    onChange={(e) => setShippingInfo({...shippingInfo, address: e.target.value})}
+                  />
+                </div>
+                
+                <div className={styles.row}>
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>City</label>
+                    <input 
+                      type="text" 
+                      className={styles.input}
+                      placeholder="Mumbai" 
+                      required 
+                      onChange={(e) => setShippingInfo({...shippingInfo, city: e.target.value})}
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>Postal Code</label>
+                    <input 
+                      type="text" 
+                      className={styles.input}
+                      placeholder="400001" 
+                      required 
+                      onChange={(e) => setShippingInfo({...shippingInfo, zip: e.target.value})}
+                    />
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div className={styles.summarySection}>
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                <h2>Payment Summary</h2>
+              </div>
+
+              <div className={styles.summaryBody}>
+                <div className={styles.summaryRow}>
+                  <span className={styles.summaryLabel}>Cart Subtotal</span>
+                  <span className={styles.summaryValue}>₹{cartTotal.toFixed(2)}</span>
+                </div>
+                <div className={styles.summaryRow}>
+                  <span className={styles.summaryLabel}>Shipping</span>
+                  <span className={styles.summaryHighlight}>Free Delivery</span>
+                </div>
+                
+                <div className={styles.divider}></div>
+                
+                <div className={styles.totalRow}>
+                  <span>Total to Pay</span>
+                  <span>₹{cartTotal.toFixed(2)}</span>
+                </div>
+
+                <button 
+                  type="submit" 
+                  form="checkout-form"
+                  className={styles.submitBtn} 
+                  disabled={isLoading || cartTotal <= 0}
+                >
+                  {isLoading ? (
+                    <span className={styles.btnContent}>
+                      <div className={styles.miniSpinner}></div>
+                      Connecting securely...
+                    </span>
+                  ) : (
+                    <span className={styles.btnContent}>
+                      Pay ₹{cartTotal.toFixed(2)} Securely
+                    </span>
+                  )}
+                </button>
+
+                <div className={styles.secureFooter}>
+                  <p>Guaranteed safe & secure checkout powered by <strong>Razorpay</strong>.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

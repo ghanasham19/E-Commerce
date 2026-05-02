@@ -1,89 +1,181 @@
+/* --- Variables & Premium Palette --- */
 .authContainer {
+  --primary-color: #1A1D20; 
+  --text-main: #2C3034; 
+  --text-muted: #868E96; 
+  --border-color: #E9ECEF; 
+  --bg-page: #F8F9FA; /* Soft off-white for the whole screen */
+  --bg-card: #FFFFFF; /* Pure white for the card to pop */
+  --accent-danger: #C04747; 
+  --shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.04);
+  
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 70vh;
-  background-color: #f1f3f6; /* Flipkart light grey background */
+  min-height: 100vh;
+  background-color: var(--bg-page);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  padding: 24px;
 }
 
+/* --- Card Styling --- */
 .authCard {
-  background-color: #ffffff;
-  padding: 40px;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: var(--bg-card);
   width: 100%;
-  max-width: 400px;
+  max-width: 440px; /* Perfect width for readability */
+  padding: 48px 40px;
+  border-radius: 24px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+/* --- Headers --- */
+.brandHeader {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.brandName {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--primary-color);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 24px 0;
 }
 
 .title {
-  text-align: center;
-  color: #212121;
-  margin-bottom: 25px;
-  font-size: 1.8rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin: 0 0 8px 0;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* --- Error Alert --- */
+.errorAlert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: #FFF5F5;
+  border: 1px solid #FFE3E3;
+  color: var(--accent-danger);
+  padding: 14px 16px;
+  border-radius: 10px;
+  margin-bottom: 24px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.errorAlert svg {
+  flex-shrink: 0;
+}
+
+/* --- Form Elements --- */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .formGroup {
   display: flex;
   flex-direction: column;
-  margin-bottom: 15px;
+  gap: 8px;
 }
 
-.formGroup label {
-  margin-bottom: 5px;
-  font-weight: 500;
-  color: #666;
+.label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-main);
 }
 
-.formGroup input {
-  padding: 12px;
-  border: 1px solid #e0e0e0;
-  border-radius: 2px;
+.input {
+  width: 100%;
+  padding: 14px 16px;
   font-size: 1rem;
-  transition: border-color 0.2s;
-}
-
-.formGroup input:focus {
+  color: var(--primary-color);
+  background-color: var(--bg-card);
+  border: 1.5px solid var(--border-color);
+  border-radius: 10px;
   outline: none;
-  border-color: #2874f0; /* Flipkart Blue */
+  transition: all 0.2s ease;
+  font-family: inherit;
+  box-sizing: border-box;
 }
 
+.input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(26, 29, 32, 0.08); 
+}
+
+.input::placeholder {
+  color: #CED4DA;
+}
+
+/* --- Submit Button --- */
 .submitBtn {
   width: 100%;
-  background-color: #fb641b; /* Flipkart Orange/Yellow accent */
-  color: white;
+  padding: 16px;
+  margin-top: 8px;
+  background-color: var(--primary-color);
+  color: #ffffff;
   border: none;
-  padding: 12px;
-  font-size: 1.1rem;
-  font-weight: bold;
-  border-radius: 2px;
+  border-radius: 10px;
+  font-size: 1.05rem;
+  font-weight: 600;
   cursor: pointer;
-  margin-top: 10px;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.submitBtn:hover {
-  background-color: #f35b14;
+.submitBtn:hover:not(:disabled) {
+  background-color: #000000;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+.submitBtn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.submitBtn:disabled {
+  background-color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* --- Switch Text / Footer Links --- */
 .switchText {
   text-align: center;
-  margin-top: 20px;
-  color: #757575;
+  margin-top: 32px;
+  font-size: 0.95rem;
+  color: var(--text-muted);
 }
 
 .switchLink {
-  color: #2874f0;
+  color: var(--primary-color);
+  font-weight: 600;
   text-decoration: none;
-  font-weight: bold;
+  margin-left: 4px;
+  transition: color 0.2s;
 }
 
 .switchLink:hover {
   text-decoration: underline;
 }
 
-.errorMessage {
-  color: #ff6161;
-  text-align: center;
-  margin-bottom: 15px;
-  font-weight: 500;
+/* --- Mobile Responsiveness --- */
+@media (max-width: 480px) {
+  .authCard {
+    padding: 32px 24px;
+  }
 }

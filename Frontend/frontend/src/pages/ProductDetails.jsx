@@ -9,13 +9,10 @@ const ProductDetails = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Dynamic Options State
   const [parsedOptions, setParsedOptions] = useState([]);
   const [selectedOptions, setSelectedOptions] = useState({});
-  
-  // Customization State
   const [customText, setCustomText] = useState('');
-  const [designImage, setDesignImage] = useState(''); // Will now hold the Base64 image data!
+  const [designImage, setDesignImage] = useState('');
 
   useEffect(() => {
     fetchProductDetails();
@@ -54,20 +51,18 @@ const ProductDetails = () => {
     setSelectedOptions({ ...selectedOptions, [optionName]: value });
   };
 
-  // --- NEW MAGIC IMAGE UPLOADER FOR USERS ---
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Safety check: Prevent files larger than 5MB
       if (file.size > 5 * 1024 * 1024) {
         alert("File is too large. Please upload an image smaller than 5MB.");
-        e.target.value = null; // Clear the input
+        e.target.value = null;
         return;
       }
 
       const reader = new FileReader();
       reader.onloadend = () => {
-        setDesignImage(reader.result); // Save the Base64 string to state
+        setDesignImage(reader.result);
       };
       reader.readAsDataURL(file);
     }
@@ -89,7 +84,7 @@ const ProductDetails = () => {
       quantity: 1,
       selectedOptions: JSON.stringify(selectedOptions), 
       customText: customText,
-      designImage: designImage // Sending the Base64 string to the backend
+      designImage: designImage 
     };
     
     try {
@@ -102,72 +97,113 @@ const ProductDetails = () => {
     }
   };
 
-  if (loading) return <h2>Loading product details...</h2>;
-  if (!product) return <h2>Product not found</h2>;
+  if (loading) return <div className={styles.pageMessage}>Loading product details...</div>;
+  if (!product) return <div className={styles.pageMessage}>Product not found</div>;
 
   return (
-    <div className={styles.container}>
-      <div className={styles.imageSection}>
-        <img src={product.image} alt={product.name} className={styles.productImage} />
-      </div>
+    <div className={styles.pageContainer}>
       
-      <div className={styles.detailsSection}>
-        <h1 className={styles.title}>{product.name}</h1>
-        <p className={styles.price}>₹{product.price.toFixed(2)}</p>
-        <p className={styles.description}>{product.description}</p>
+      {/* New Back Button */}
+      <button onClick={() => navigate('/')} className={styles.backButton}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Back to Home
+      </button>
 
-        {/* Dynamic Dropdowns */}
-        {parsedOptions.length > 0 && parsedOptions.map((option, index) => (
-          <div key={index} className={styles.formGroup}>
-            <label>Select {option.name}</label>
-            <select 
-              value={selectedOptions[option.name] || ''} 
-              onChange={(e) => handleOptionChange(option.name, e.target.value)}
-            >
-              {option.values.map((val, i) => (
-                <option key={i} value={val}>{val}</option>
-              ))}
-            </select>
+      <div className={styles.grid}>
+        
+        {/* Left Side: Product Image */}
+        <div className={styles.imageGallery}>
+          <div className={styles.mainImageWrapper}>
+            <img src={product.image} alt={product.name} className={styles.productImage} />
           </div>
-        ))}
-
-        <div className={styles.formGroup}>
-          <label>Custom Text to Print (Optional)</label>
-          <input 
-            type="text" 
-            placeholder="e.g., Happy Birthday" 
-            value={customText}
-            onChange={(e) => setCustomText(e.target.value)}
-          />
         </div>
-
-        {/* NEW FILE UPLOAD FIELD */}
-        <div className={styles.formGroup} style={{ backgroundColor: '#f9f9f9', padding: '15px', borderRadius: '4px', border: '1px dashed #ccc' }}>
-          <label>Upload Custom Design/Logo (Optional)</label>
-          <input 
-            type="file" 
-            accept="image/*"
-            onChange={handleImageUpload}
-          />
+        
+        {/* Right Side: Product Details & Form */}
+        <div className={styles.productInfo}>
+          <div className={styles.header}>
+            <h1 className={styles.title}>{product.name}</h1>
+            <p className={styles.price}>₹{product.price.toFixed(2)}</p>
+          </div>
           
-          {/* Image Preview for the User */}
-          {designImage && (
-            <div style={{ marginTop: '10px' }}>
-              <p style={{ color: '#388e3c', fontSize: '0.9rem', marginBottom: '5px' }}>✓ Design attached</p>
-              <img src={designImage} alt="Custom Design Preview" style={{ height: '80px', borderRadius: '4px', border: '1px solid #ccc' }} />
-              <button 
-                onClick={() => setDesignImage('')} 
-                style={{ display: 'block', marginTop: '8px', color: '#ff4d4f', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
-              >
-                Remove Image
-              </button>
-            </div>
-          )}
-        </div>
+          <p className={styles.description}>{product.description}</p>
 
-        <button className={styles.addToCartBtn} onClick={handleAddToCart}>
-          ADD TO CART
-        </button>
+          <div className={styles.optionsDivider} />
+
+          <div className={styles.formSection}>
+            {parsedOptions.length > 0 && parsedOptions.map((option, index) => (
+              <div key={index} className={styles.inputGroup}>
+                <label className={styles.label}>{option.name}</label>
+                <div className={styles.selectWrapper}>
+                  <select 
+                    className={styles.selectInput}
+                    value={selectedOptions[option.name] || ''} 
+                    onChange={(e) => handleOptionChange(option.name, e.target.value)}
+                  >
+                    {option.values.map((val, i) => (
+                      <option key={i} value={val}>{val}</option>
+                    ))}
+                  </select>
+                  <svg className={styles.selectArrow} width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 1.5L6 6.5L11 1.5" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+            ))}
+
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>Custom Text (Optional)</label>
+              <input 
+                className={styles.textInput}
+                type="text" 
+                placeholder="e.g., Happy Birthday" 
+                value={customText}
+                onChange={(e) => setCustomText(e.target.value)}
+              />
+            </div>
+
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>Custom Design (Optional)</label>
+              
+              {!designImage ? (
+                <div className={styles.uploadDropzone}>
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className={styles.hiddenFileInput}
+                    id="file-upload"
+                  />
+                  <label htmlFor="file-upload" className={styles.dropzoneContent}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.uploadIcon}>
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="17 8 12 3 7 8"></polyline>
+                      <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <span className={styles.uploadText}>Click to upload an image</span>
+                    <span className={styles.uploadSubtext}>Max file size: 5MB</span>
+                  </label>
+                </div>
+              ) : (
+                <div className={styles.uploadPreview}>
+                  <img src={designImage} alt="Preview" className={styles.previewImage} />
+                  <div className={styles.previewDetails}>
+                    <span className={styles.successBadge}>Image Attached</span>
+                    <button onClick={() => setDesignImage('')} className={styles.removeBtn}>
+                      Remove image
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <button className={styles.addToCartBtn} onClick={handleAddToCart}>
+            Add to Cart
+          </button>
+        </div>
       </div>
     </div>
   );

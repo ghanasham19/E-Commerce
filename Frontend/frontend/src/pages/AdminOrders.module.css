@@ -1,0 +1,381 @@
+/* --- Admin Palette & Variables --- */
+.adminContainer {
+  --primary-color: #0F0F0F; 
+  --text-main: #1A1A1A; 
+  --text-muted: #8E8E93; 
+  --border-color: #EAEAEA; 
+  --row-border-color: #D4D4D8; 
+  --border-hover: #A1A1AA; 
+  --bg-page: #F4F4F5;
+  --bg-card: #FFFFFF;
+  --accent-danger: #D93025;
+  --accent-blue: #007AFF;
+  
+  /* Status Colors */
+  --status-processing: #E8F0FE;
+  --status-processing-text: #1967D2;
+  --status-shipped: #FEF3C7;
+  --status-shipped-text: #92400E;
+  --status-delivered: #E6F4EA;
+  --status-delivered-text: #1E8E3E;
+  --status-cancelled: #FCE8E6;
+  --status-cancelled-text: #C5221F;
+
+  max-width: 1400px; 
+  margin: 0 auto;
+  padding: 40px 32px;
+  font-family: 'Inter', -apple-system, sans-serif;
+  color: var(--text-main);
+  background-color: var(--bg-page);
+  min-height: 100vh;
+}
+
+/* --- Header Section --- */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 32px;
+}
+
+.title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin: 0 0 8px 0;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.metricBadge {
+  background-color: var(--bg-card);
+  padding: 12px 24px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border-color);
+}
+
+.metricValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.metricLabel {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* --- Main Dashboard Card --- */
+.dashboardCard {
+  background-color: var(--bg-card);
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0,0,0,0.02);
+}
+
+/* --- Segmented Tab Navigation --- */
+.tabContainer {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 32px;
+  border-bottom: 2px solid #F0F0F0;
+  padding-bottom: 16px;
+  overflow-x: auto; 
+}
+
+.tabBtn {
+  background: transparent;
+  border: none;
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 100px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tabBtn:hover {
+  background-color: #F8F9FA;
+  color: var(--text-main);
+}
+
+.activeTab {
+  background-color: var(--primary-color) !important;
+  color: #FFFFFF !important;
+}
+
+/* UPGRADED: Tab Count Badge styling for both states */
+.tabCount {
+  background-color: #EAEAEA;
+  color: var(--text-muted);
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+}
+
+.activeTab .tabCount {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+}
+
+/* --- VISIBLE FLOATING ROW STYLING --- */
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.dataTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 16px; 
+}
+
+.dataTable th {
+  text-align: left;
+  padding: 0 20px 8px 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.textRight {
+  text-align: right !important;
+}
+
+.dataRow {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); 
+}
+
+.dataRow td {
+  padding: 20px;
+  background-color: #FFFFFF;
+  border-top: 1.5px solid var(--row-border-color);
+  border-bottom: 1.5px solid var(--row-border-color);
+  transition: border-color 0.3s ease;
+}
+
+.dataRow td:first-child {
+  border-left: 1.5px solid var(--row-border-color);
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+  position: relative; 
+}
+
+.dataRow td:first-child::before {
+  content: '';
+  position: absolute;
+  left: -1.5px;
+  top: -1.5px;
+  bottom: -1.5px;
+  width: 6px;
+  background-color: var(--primary-color);
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.dataRow td:last-child {
+  border-right: 1.5px solid var(--row-border-color);
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.dataRow:hover {
+  transform: translateY(-4px) scale(1.005);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08); 
+  z-index: 10; 
+}
+
+.dataRow:hover td {
+  border-top-color: var(--border-hover);
+  border-bottom-color: var(--border-hover);
+}
+.dataRow:hover td:first-child {
+  border-left-color: var(--border-hover);
+}
+.dataRow:hover td:last-child {
+  border-right-color: var(--border-hover);
+}
+
+.dataRow:hover td:first-child::before {
+  opacity: 1;
+}
+
+/* --- Timeline/Date Formatting --- */
+.dateWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.timeAgoText {
+  font-weight: 700;
+  color: var(--primary-color);
+  font-size: 0.95rem;
+}
+
+.exactDateText {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* Table Typography Helpers */
+.fontBold { font-weight: 700; color: var(--primary-color); }
+.textMuted { color: var(--text-muted); font-size: 0.95rem; }
+.priceCell { font-weight: 700; color: var(--text-main); font-size: 1.1rem; }
+
+/* Customer Avatar Display */
+.customerCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 500;
+}
+
+.customerAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #F0F0F5;
+  color: var(--primary-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+/* --- Status Dropdown --- */
+.selectWrapper {
+  position: relative;
+  width: max-content;
+}
+
+.statusSelect {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 8px 36px 8px 16px;
+  border-radius: 100px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.statusProcessing { background-color: var(--status-processing); color: var(--status-processing-text); }
+.statusShipped { background-color: var(--status-shipped); color: var(--status-shipped-text); }
+.statusDelivered { background-color: var(--status-delivered); color: var(--status-delivered-text); }
+.statusCancelled { background-color: var(--status-cancelled); color: var(--status-cancelled-text); }
+
+.selectArrow {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* --- Action Buttons --- */
+.actionGroup {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.iconBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: #F8F9FA;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.iconBtn:hover {
+  background-color: var(--primary-color);
+  color: #FFFFFF;
+}
+
+.deleteBtn:hover {
+  background-color: #FFF5F5;
+  color: var(--accent-danger);
+  border-color: #FFE3E3;
+}
+
+/* --- Empty States & Loaders --- */
+.emptyState {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+
+.emptyIcon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.emptyState h3 {
+  color: var(--primary-color);
+  margin: 0 0 8px 0;
+}
+
+.loadingPulse {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 60px;
+}
+
+.loaderLine {
+  height: 100px;
+  background: linear-gradient(90deg, #F0F0F5 25%, #FFFFFF 50%, #F0F0F5 75%);
+  background-size: 200% 100%;
+  animation: pulse 1.5s infinite linear;
+  border-radius: 16px;
+}
+
+@keyframes pulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* --- Mobile Responsiveness --- */
+@media (max-width: 1024px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+}

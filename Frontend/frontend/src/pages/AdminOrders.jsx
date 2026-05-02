@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import styles from './AdminDashboard.module.css';
+import styles from './AdminOrders.module.css'; 
 
 const AdminOrders = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // NEW: Tab Tracking State
   const [activeTab, setActiveTab] = useState('All');
   const tabs = ['All', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
 
@@ -26,10 +25,11 @@ const AdminOrders = () => {
   const fetchAllOrders = async () => {
     try {
       const response = await api.get('/orders/all');
-      setOrders(response.data);
-      setLoading(false);
+      const sortedOrders = response.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setOrders(sortedOrders);
     } catch (error) {
       console.error("Error fetching all orders:", error);
+    } finally {
       setLoading(false);
     }
   };
@@ -44,7 +44,7 @@ const AdminOrders = () => {
   };
 
   const handleDeleteOrder = async (orderId) => {
-    if (!window.confirm(`Are you sure you want to permanently delete Order #${orderId}?`)) return;
+    if (!window.confirm(`Are you absolutely sure you want to permanently delete Order #${String(orderId).padStart(5, '0')}?`)) return;
     try {
       await api.delete(`/orders/${orderId}`);
       setOrders(orders.filter(order => order.id !== orderId));
@@ -53,93 +53,166 @@ const AdminOrders = () => {
     }
   };
 
-  // NEW: Dynamically filter orders based on the clicked tab!
+  const timeAgo = (dateString) => {
+    if (!dateString) return 'Unknown';
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.round((now - date) / 1000);
+    const minutes = Math.round(seconds / 60);
+    const hours = Math.round(minutes / 60);
+    const days = Math.round(hours / 24);
+
+    if (seconds < 60) return 'Just now';
+    if (minutes < 60) return `${minutes} min ago`;
+    if (hours < 24) return `${hours} hr ago`;
+    if (days === 1) return 'Yesterday';
+    return `${days} days ago`;
+  };
+
+  // NEW: Helper to calculate the exact count for ANY tab
+  const getTabCount = (tabName) => {
+    if (tabName === 'All') return orders.length;
+    return orders.filter(order => order.status === tabName).length;
+  };
+
   const filteredOrders = activeTab === 'All' 
     ? orders 
     : orders.filter(order => order.status === activeTab);
 
-  if (loading) return <h2>Loading all orders...</h2>;
+  if (loading) {
+    return (
+      <div className={styles.adminContainer}>
+        <div className={styles.loadingPulse}>
+          <div className={styles.loaderLine}></div>
+          <div className={styles.loaderLine}></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className={styles.dashboardContainer}>
+    <div className={styles.adminContainer}>
+      
       <div className={styles.header}>
-        <h1>Order Management Console</h1>
-        <p>Review, fulfill, and manage customer orders.</p>
+        <div>
+          <h1 className={styles.title}>Order Management</h1>
+          <p className={styles.subtitle}>Review, fulfill, and manage customer orders.</p>
+        </div>
+        <div className={styles.metricBadge}>
+          <span className={styles.metricValue}>{orders.length}</span>
+          <span className={styles.metricLabel}>Total Orders</span>
+        </div>
       </div>
 
-      <div className={styles.section}>
+      <div className={styles.dashboardCard}>
         
-        {/* NEW: PROFESSIONAL TAB BAR */}
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '25px', borderBottom: '2px solid #f0f0f0', paddingBottom: '10px' }}>
-          {tabs.map(tab => (
-            <button 
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              style={{
-                backgroundColor: activeTab === tab ? '#2874f0' : 'transparent',
-                color: activeTab === tab ? 'white' : '#666',
-                border: activeTab === tab ? 'none' : '1px solid #ccc',
-                padding: '8px 20px',
-                borderRadius: '20px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-          <h2 className={styles.sectionTitle} style={{ borderBottom: 'none', margin: 0, padding: 0 }}>
-            {activeTab} Orders ({filteredOrders.length})
-          </h2>
+        {/* UPGRADED: Tabs now show permanent counts */}
+        <div className={styles.tabContainer}>
+          {tabs.map(tab => {
+            const count = getTabCount(tab);
+            return (
+              <button 
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`${styles.tabBtn} ${activeTab === tab ? styles.activeTab : ''}`}
+              >
+                {tab}
+                <span className={styles.tabCount}>{count}</span>
+              </button>
+            );
+          })}
         </div>
         
         {filteredOrders.length === 0 ? (
-          <p style={{ color: '#878787', marginTop: '20px' }}>No orders found in the "{activeTab}" category.</p>
+          <div className={styles.emptyState}>
+            <div className={styles.emptyIcon}>📋</div>
+            <h3>No {activeTab} Orders</h3>
+            <p>There are currently no orders in this category.</p>
+          </div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px' }}>
-            <thead>
-              <tr style={{ backgroundColor: '#f4f4f9', textAlign: 'left', borderBottom: '2px solid #ddd' }}>
-                <th style={{ padding: '12px' }}>Order ID</th>
-                <th style={{ padding: '12px' }}>Customer</th>
-                <th style={{ padding: '12px' }}>Date</th>
-                <th style={{ padding: '12px' }}>Total</th>
-                <th style={{ padding: '12px' }}>Status</th>
-                <th style={{ padding: '12px' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredOrders.map((order) => (
-                <tr key={order.id} style={{ borderBottom: '1px solid #eee' }}>
-                  <td style={{ padding: '12px', fontWeight: 'bold' }}>#{order.id}</td>
-                  <td style={{ padding: '12px' }}>{order.user.name}</td>
-                  <td style={{ padding: '12px' }}>{new Date(order.createdAt).toLocaleDateString()}</td>
-                  <td style={{ padding: '12px', color: '#388e3c', fontWeight: 'bold' }}>₹{order.totalPrice.toFixed(2)}</td>
-                  
-                  <td style={{ padding: '12px' }}>
-                    <select 
-                      value={order.status} 
-                      onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                      style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ccc' }}
-                    >
-                      <option value="Processing">Processing</option>
-                      <option value="Shipped">Shipped</option>
-                      <option value="Delivered">Delivered</option>
-                      <option value="Cancelled">Cancelled</option>
-                    </select>
-                  </td>
-                  
-                  <td style={{ padding: '12px', display: 'flex', gap: '10px' }}>
-                    <button onClick={() => navigate(`/admin/orders/${order.id}`)} style={{ backgroundColor: '#2874f0', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Details</button>
-                    <button onClick={() => handleDeleteOrder(order.id)} style={{ backgroundColor: 'transparent', color: '#ff4d4f', border: '1px solid #ff4d4f', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Delete</button>
-                  </td>
+          <div className={styles.tableWrapper}>
+            <table className={styles.dataTable}>
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Customer</th>
+                  <th>Timeline</th>
+                  <th>Total</th>
+                  <th>Update Status</th>
+                  <th className={styles.textRight}>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredOrders.map((order) => (
+                  <tr key={order.id} className={styles.dataRow}>
+                    <td className={styles.fontBold}>#{String(order.id).padStart(5, '0')}</td>
+                    <td>
+                      <div className={styles.customerCell}>
+                        <div className={styles.customerAvatar}>
+                          {order.user?.name ? order.user.name.charAt(0).toUpperCase() : '?'}
+                        </div>
+                        <span>{order.user?.name || 'Guest'}</span>
+                      </div>
+                    </td>
+                    
+                    <td>
+                      <div className={styles.dateWrapper}>
+                        <span className={styles.timeAgoText}>{timeAgo(order.createdAt)}</span>
+                        <span className={styles.exactDateText}>
+                          {order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+                        </span>
+                      </div>
+                    </td>
+
+                    <td className={styles.priceCell}>₹{order.totalPrice ? order.totalPrice.toFixed(2) : '0.00'}</td>
+                    
+                    <td>
+                      <div className={styles.selectWrapper}>
+                        <select 
+                          value={order.status || 'Processing'} 
+                          onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                          className={`${styles.statusSelect} ${styles[`status${order.status || 'Processing'}`]}`}
+                        >
+                          <option value="Processing">Processing</option>
+                          <option value="Shipped">Shipped</option>
+                          <option value="Delivered">Delivered</option>
+                          <option value="Cancelled">Cancelled</option>
+                        </select>
+                        <svg className={styles.selectArrow} width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="1 1 5 5 9 1"></polyline>
+                        </svg>
+                      </div>
+                    </td>
+                    
+                    <td>
+                      <div className={styles.actionGroup}>
+                        <button 
+                          onClick={() => navigate(`/admin/orders/${order.id}`)} 
+                          className={styles.iconBtn}
+                          title="View Details"
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                          </svg>
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteOrder(order.id)} 
+                          className={`${styles.iconBtn} ${styles.deleteBtn}`}
+                          title="Delete Order"
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>
